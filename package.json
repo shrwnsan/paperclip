@@ -31,7 +31,21 @@
     "test:e2e": "npx playwright test --config tests/e2e/playwright.config.ts",
     "test:e2e:headed": "npx playwright test --config tests/e2e/playwright.config.ts --headed",
     "test:release-smoke": "npx playwright test --config tests/release-smoke/playwright.config.ts",
-    "test:release-smoke:headed": "npx playwright test --config tests/release-smoke/playwright.config.ts --headed"
+    "test:release-smoke:headed": "npx playwright test --config tests/release-smoke/playwright.config.ts --headed",
+    "bun:dev": "bun run scripts/dev-runner.mjs watch",
+    "bun:dev:watch": "PAPERCLIP_MIGRATION_PROMPT=never bun run scripts/dev-runner.mjs watch",
+    "bun:dev:once": "bun run scripts/dev-runner.mjs dev",
+    "bun:dev:server": "bun run --filter @paperclipai/server dev",
+    "bun:dev:ui": "bun run --filter @paperclipai/ui dev",
+    "bun:build": "bun run --filter '*' build",
+    "bun:typecheck": "bun run --filter '*' typecheck",
+    "bun:test": "bun test",
+    "bun:test:run": "bun test --run",
+    "bun:db:generate": "bun run --filter @paperclipai/db generate",
+    "bun:db:migrate": "bun run --filter @paperclipai/db migrate",
+    "bun:secrets:migrate-inline-env": "bun run scripts/migrate-inline-env-secrets.ts",
+    "bun:paperclipai": "bun run cli/src/index.ts",
+    "bun:check:tokens": "bun run scripts/check-forbidden-tokens.mjs"
   },
   "devDependencies": {
     "cross-env": "^10.1.0",

@@ -1,0 +1,56 @@
+# Bun configuration for Paperclip
+# Optimized for Apple Silicon (M1/M2/M3/M4) development
+
+[install]
+# Use exact versions for consistency
+exact = true
+
+# Prefer offline packages for faster installs
+prefer-offline = true
+
+# Production optimizations
+production = false
+
+[install.lockfile]
+# Save lockfile for reproducible builds
+save = true
+
+[run]
+# Silent mode for cleaner output
+silent = false
+
+# Bun's built-in TypeScript support
+[build]
+# Target Apple Silicon specifically
+target = "aarch64-darwin"
+
+# Development server configuration
+[dev]
+# Enable hot module replacement
+hmr = true
+
+# Open browser automatically (can disable if unwanted)
+open = false
+
+# Port for development server
+port = 3100
+
+# Test runner configuration
+[test]
+# Use Bun's built-in test runner
+preload = ["./test/setup.ts"]
+
+# Coverage settings
+coverage = true
+coverageThreshold = 0.7
+
+# Runtime optimizations for Apple Silicon
+[define]
+# Optimize for ARM64
+process.arch = "arm64"
+process.platform = "darwin"
+
+# Enable experimental features
+[experimental]
+# Enable global Bun APIs
+global = true
