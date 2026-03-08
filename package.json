@@ -2,6 +2,13 @@
   "name": "paperclip",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/*",
+    "packages/adapters/*",
+    "server",
+    "ui",
+    "cli"
+  ],
   "scripts": {
     "dev": "node scripts/dev-runner.mjs watch",
     "dev:watch": "node scripts/dev-runner.mjs watch",
@@ -42,7 +49,7 @@
     "bun:test": "bun test",
     "bun:test:run": "bun test --run",
     "bun:db:generate": "bun run --filter @paperclipai/db generate",
-    "bun:db:migrate": "bun run --filter @paperclipai/db migrate",
+    "bun:db:migrate": "bun run --filter @paperclipai/db bun:migrate",
     "bun:secrets:migrate-inline-env": "bun run scripts/migrate-inline-env-secrets.ts",
     "bun:paperclipai": "bun run cli/src/index.ts",
     "bun:check:tokens": "bun run scripts/check-forbidden-tokens.mjs"
