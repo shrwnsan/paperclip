@@ -100,10 +100,25 @@ bun run bun:build
 node server/dist/index.js
 ```
 
-### Docker (Coming Soon)
+### Option 3: Docker (Isolated Environment)
 
 ```bash
-docker pull paperclip/paperclip:latest-bun
+# Start container with persistent data
+docker compose -f docker-compose.bun.yml up -d
+
+# Check logs
+docker compose -f docker-compose.bun.yml logs -f
+
+# Stop
+docker compose -f docker-compose.bun.yml down
+```
+
+**Data persists in `./data/`** - safe to stop/start containers.
+
+**Backup for migration:**
+```bash
+./scripts/backup-data.sh
+# → data/backups/paperclip-2026-03-20.tar.gz
 ```
 
 ## What's Different
