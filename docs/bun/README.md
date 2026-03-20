@@ -6,7 +6,8 @@
 
 | Document | Description | Use Case |
 |----------|-------------|----------|
-| **[SUMMARY.md](./SUMMARY.md)** | Complete overview & quick start | Start here! |
+| **[RUNNING_ON_BUN.md](./RUNNING_ON_BUN.md)** | **Self-hoster guide** | **Start here!** |
+| **[SUMMARY.md](./SUMMARY.md)** | Complete overview & quick start | Full picture |
 | **[BUN.md](./BUN.md)** | Full usage documentation | Detailed guide |
 | **[TEST_RESULTS.md](./TEST_RESULTS.md)** | Performance benchmarks | See the numbers |
 | **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** | Issue resolution | Fix problems |
@@ -42,8 +43,8 @@ bun --hot server/src/index.ts
 
 ## 📖 Reading Order
 
-1. **SUMMARY.md** - Get the complete overview
-2. **BUN.md** - Learn how to use Bun with Paperclip
+1. **RUNNING_ON_BUN.md** - Get started quickly
+2. **BUN.md** - Learn all Bun commands
 3. **TEST_RESULTS.md** - See performance benchmarks
 4. **TROUBLESHOOTING.md** - Resolve any issues
 
