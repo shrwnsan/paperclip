@@ -25,6 +25,11 @@ services:
       # - ./data:/app/data
     environment:
       - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PAPERCLIP_DEPLOYMENT_MODE=authenticated
+      - PAPERCLIP_DEPLOYMENT_EXPOSURE=private
+      - PAPERCLIP_PUBLIC_URL=http://localhost:3100
+      - BETTER_AUTH_SECRET=dev-secret-for-testing-only
       - PAPERCLIP_DATA_DIR=/app/data
       - NODE_PATH=/app/node_modules
     restart: unless-stopped

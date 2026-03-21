@@ -22,8 +22,15 @@ curl http://localhost:3100/api/health
 
 ### Docker (5-10 min)
 ```bash
-docker compose -f docker-compose.bun.yml up
+docker compose -f docker-compose.bun.yml up -d
+sleep 10
 curl http://localhost:3100/api/health
+docker compose -f docker-compose.bun.yml logs -f
+```
+
+View health check status:
+```bash
+docker compose -f docker-compose.bun.yml ps
 ```
 
 ### Full Benchmark (15-20 min)
@@ -43,10 +50,11 @@ curl http://localhost:3100/api/health
 
 ## ✅ Status
 
-- ✅ **Ready**: Bun 1.0+, Docker support (Dockerfile.bun, docker-compose.bun.yml)
-- ✅ **Tested**: All API endpoints work, database operations tested
-- ✅ **Benchmarked**: Performance improvements confirmed
-- ✅ **Documented**: Comprehensive guides included
+- ✅ **Local Ready**: Bun 1.0+, full server startup working  
+- ✅ **Docker Ready**: Multi-stage build, dev + production targets, health checks
+- ✅ **Tested**: All API endpoints work (`/api/health`, `/api/companies`), database operations verified
+- ✅ **Fixed**: Embedded-postgres symlink hydration, port binding issues
+- ✅ **Documented**: Comprehensive guides with troubleshooting
 
 ## 📖 Reading Order
 

@@ -30,11 +30,17 @@ curl http://localhost:3100/api/health
 ### Option A: Quick Bun Container
 
 ```bash
-docker compose -f docker-compose.bun.yml up
+docker compose -f docker-compose.bun.yml up -d
+sleep 10
 curl http://localhost:3100/api/health
+docker compose -f docker-compose.bun.yml ps  # view health status
+docker compose -f docker-compose.bun.yml logs -f  # stream logs
+docker compose -f docker-compose.bun.yml down  # cleanup
 ```
 
-Ports: `3100` (API)
+**Ports**: `3100` (API)  
+**Mode**: `authenticated` (requires login, unlike local dev)  
+**Note**: Uses embedded PostgreSQL, data persists in `./data/`
 
 ### Option B: Compare Node vs Bun
 
