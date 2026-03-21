@@ -56,9 +56,9 @@
     "bun:check:tokens": "bun run scripts/check-forbidden-tokens.mjs"
   },
   "devDependencies": {
-    "cross-env": "^10.1.0",
     "@playwright/test": "^1.58.2",
-    "esbuild": "^0.27.3",
+    "cross-env": "^10.1.0",
+    "esbuild": "0.25.12",
     "typescript": "^5.7.3",
     "vitest": "^3.0.5"
   },
