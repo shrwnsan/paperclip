@@ -207,6 +207,9 @@ A: Yes! Add new adapters by implementing the `ServerAdapterModule` interface and
 **Q: What's the recommended adapter for testing?**
 A: **Process adapter** (no auth needed) or **OpenCode with free provider** (real inference).
 
+**Q: Can I use the Claude adapter with z.ai or other Anthropic-compatible endpoints?**
+A: No. The `claude_local` adapter is hardcoded to use Anthropic's official API endpoints. Claude CLI doesn't expose environment variables or configuration to override the endpoint. Even though z.ai might be Anthropic-compatible, you cannot point the adapter at it. Use the **HTTP adapter** to integrate z.ai instead, or consider requesting endpoint configuration support from Anthropic.
+
 ---
 
 ## 📖 Reading Order

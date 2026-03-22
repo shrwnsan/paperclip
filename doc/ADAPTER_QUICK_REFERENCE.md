@@ -9,6 +9,9 @@ You're running Paperclip with:
 - Auth: `local_trusted` (no login needed)
 - Company created with CEO agent using `claude_local`
 
+**⚠️ Claude Adapter Limitation:**
+Claude CLI doesn't support custom API endpoints (e.g., z.ai). Even if z.ai is Anthropic-compatible, you cannot use `claude_local` adapter with it. Use OpenCode, Process, or HTTP adapters instead.
+
 ## Get Your IDs
 
 ```bash

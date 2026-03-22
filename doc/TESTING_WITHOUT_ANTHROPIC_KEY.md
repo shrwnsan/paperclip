@@ -10,7 +10,10 @@ You're running Paperclip with:
 - ✅ Embedded PostgreSQL
 - ✅ CEO agent created
 - ❌ CEO agent needs Claude CLI auth (requires Anthropic API key)
+- ❌ Claude adapter cannot be pointed at z.ai or other Anthropic-compatible endpoints (Claude CLI doesn't expose endpoint override)
 - ✅ You want to use z.ai or custom inference provider instead
+
+**Important Discovery:** While theoretically the Claude adapter could work with Anthropic-compatible endpoints like z.ai, the Claude CLI tool itself doesn't currently support endpoint configuration. This means even with z.ai's API key, you cannot use `claude_local` adapter directly. You'll need one of the alternatives below.
 
 ## Quick Solutions
 

@@ -153,6 +153,19 @@ curl -X PATCH http://localhost:3100/api/companies/{companyId}/agents/{agentId} \
   }'
 ```
 
+## Claude Adapter Limitations
+
+**Important:** The `claude_local` adapter is hardcoded to use Anthropic's API endpoints. While Claude CLI supports `ANTHROPIC_API_KEY` for API key authentication, it does **not** expose environment variables or configuration options to override the API endpoint.
+
+**This means:**
+- ❌ Cannot point Claude adapter at z.ai or other Anthropic-compatible endpoints
+- ❌ Cannot use proxy servers or alternative Anthropic-compatible providers
+- ✅ Only works with official Anthropic API
+
+**Architectural Note:** The Paperclip adapter system itself is flexible enough to support endpoint configuration (the `adapterConfig` JSONB field could accept an `apiEndpoint` parameter), but Claude CLI would need to expose this feature first. If this is important for your use case, consider requesting it from Anthropic.
+
+---
+
 ## Using OpenCode for Multi-Provider Support
 
 **Package:** [@paperclipai/adapter-opencode-local](file:///Users/karma/Developer/forked/paperclip/packages/adapters/opencode-local)
