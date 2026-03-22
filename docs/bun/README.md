@@ -13,14 +13,27 @@ Fast, modern JavaScript runtime for Paperclip. Optimized for Apple Silicon (M1/M
 
 ## 🚀 Quick Start
 
-### Local Testing (2-5 min)
+### Option 1: Local Dev (API + UI, Recommended)
+
+**Terminal 1 - API:**
 ```bash
-bun install
-bun --hot server/src/index.ts
-curl http://localhost:3100/api/health
+./scripts/setup-bun.sh
+bun run server/src/index.ts
 ```
 
-### Docker (5-10 min)
+**Terminal 2 - UI:**
+```bash
+bun run --filter @paperclipai/ui dev
+```
+
+Then visit: **http://localhost:5173** (or 5174 if in use)
+
+- ✅ Hot reload for both API and UI
+- ✅ Full dev experience
+- ✅ Local database (embedded PostgreSQL)
+
+### Option 2: Docker Only (5-10 min)
+
 ```bash
 docker compose -f docker-compose.bun.yml up -d
 sleep 10
@@ -32,6 +45,9 @@ View health check status:
 ```bash
 docker compose -f docker-compose.bun.yml ps
 ```
+
+- ✅ Single command
+- ✅ Production-like setup
 
 ### Full Benchmark (15-20 min)
 ```bash
