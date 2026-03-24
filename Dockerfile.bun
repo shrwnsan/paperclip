@@ -1,0 +1,102 @@
+# Paperclip with Bun Runtime
+# Multi-stage build for dev and production
+
+# ============================================
+# Stage 1: Development
+# ============================================
+FROM oven/bun:1-debian AS dev
+
+# Install locale support (embedded-postgres requires en_US.UTF-8)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends locales \
+  && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
+  && locale-gen \
+  && rm -rf /var/lib/apt/lists/*
+
+# Create non-root user for embedded Postgres
+RUN useradd -m -u 1001 -s /bin/bash paperclip
+
+WORKDIR /app
+
+# Install dependencies first (for caching)
+COPY package.json bunfig.toml tsconfig.json tsconfig.base.json ./
+COPY packages packages
+COPY server server
+COPY ui ui
+COPY cli cli
+COPY scripts scripts
+COPY skills skills
+
+RUN bun install
+
+# Hydrate embedded-postgres symlinks (bun skips postinstall for optional deps).
+# The hydrate script uses process.cwd() to find native/pg-symlinks.json,
+# so we must run it from the package root directory.
+RUN for pkg in /app/node_modules/.bun/@embedded-postgres+*/node_modules/@embedded-postgres/*/; do \
+      if [ -f "$pkg/scripts/hydrate-symlinks.js" ]; then \
+        cd "$pkg" && bun run scripts/hydrate-symlinks.js; \
+      fi; \
+    done
+
+# Build workspace packages (server depends on these)
+RUN cd /app/packages/shared && bun run build
+RUN cd /app/packages/db && bun run build
+RUN cd /app/packages/adapter-utils && bun run build
+# Plugin-sdk build script uses pnpm, run tsc directly
+RUN cd /app/packages/plugins/sdk && bun x tsc
+
+# Give paperclip user ownership
+RUN chown -R paperclip:paperclip /app
+
+# Expose port
+EXPOSE 3100
+
+# Switch to non-root user
+USER paperclip
+
+# Default: dev server with hot reload
+ENV NODE_PATH=/app/node_modules
+CMD ["bun", "--hot", "server/src/index.ts"]
+
+# ============================================
+# Stage 2: Production
+# ============================================
+FROM oven/bun:1-debian AS production
+
+# Install locale support (embedded-postgres requires en_US.UTF-8)
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends locales \
+  && sed -i 's/# en_US.UTF-8/en_US.UTF-8/' /etc/locale.gen \
+  && locale-gen \
+  && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy only what's needed for production
+COPY package.json bunfig.toml tsconfig.json tsconfig.base.json ./
+COPY packages packages
+COPY server server
+COPY ui ui
+COPY cli cli
+COPY skills skills
+
+# Install production dependencies and build
+RUN bun install --production
+
+# Hydrate embedded-postgres symlinks
+RUN for pkg in /app/node_modules/.bun/@embedded-postgres+*/node_modules/@embedded-postgres/*/; do \
+      if [ -f "$pkg/scripts/hydrate-symlinks.js" ]; then \
+        cd "$pkg" && bun run scripts/hydrate-symlinks.js; \
+      fi; \
+    done
+
+RUN bun run bun:build
+
+# Create data directory
+RUN mkdir -p /app/data
+
+# Expose port
+EXPOSE 3100
+
+# Run production server
+CMD ["bun", "run", "server/dist/index.js"]

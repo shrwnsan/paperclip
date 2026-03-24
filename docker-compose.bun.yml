@@ -1,0 +1,47 @@
+# Paperclip with Bun Runtime - Docker Compose
+#
+# Usage:
+#   docker compose -f docker-compose.bun.yml up -d
+#   docker compose -f docker-compose.bun.yml down
+#   docker compose -f docker-compose.bun.yml logs -f
+#
+# Data persists in ./data/ (gitignored)
+# Backup with: ./scripts/backup-data.sh
+
+services:
+  paperclip:
+    build:
+      context: .
+      dockerfile: Dockerfile.bun
+      target: dev
+    container_name: paperclip-bun
+    ports:
+      - "3100:3100"
+    # volumes:
+      # Hot reload disabled for now - uncomment after basic functionality works
+      # - ./packages/db/src:/app/packages/db/src
+      # - ./packages/shared/src:/app/packages/shared/src
+      # - ./server/src:/app/server/src
+      # - ./data:/app/data
+    environment:
+      - NODE_ENV=development
+      - HOST=0.0.0.0
+      - PAPERCLIP_DEPLOYMENT_MODE=authenticated
+      - PAPERCLIP_DEPLOYMENT_EXPOSURE=private
+      - PAPERCLIP_PUBLIC_URL=http://localhost:3100
+      - BETTER_AUTH_SECRET=dev-secret-for-testing-only
+      - PAPERCLIP_DATA_DIR=/app/data
+      - NODE_PATH=/app/node_modules
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3100/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+# Production override:
+#   docker compose -f docker-compose.bun.yml -f docker-compose.bun.prod.yml up -d
+#
+# Or build production image directly:
+#   docker build -f Dockerfile.bun --target production -t paperclip:bun .
