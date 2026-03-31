@@ -1,4 +1,4 @@
-import { Router, type Request } from "express";
+import { Router, type Request, json as expressJson } from "express";
 import type { Db } from "@paperclipai/db";
 import {
   companyPortabilityExportSchema,
@@ -104,14 +104,14 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(company);
   });
 
-  router.post("/:companyId/export", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:companyId/export", expressJson({ limit: "10mb" }), validate(companyPortabilityExportSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     assertCompanyAccess(req, companyId);
     const result = await portability.exportBundle(companyId, req.body);
     res.json(result);
   });
 
-  router.post("/import/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
+  router.post("/import/preview", expressJson({ limit: "10mb" }), validate(companyPortabilityPreviewSchema), async (req, res) => {
     assertBoard(req);
     if (req.body.target.mode === "existing_company") {
       assertCompanyAccess(req, req.body.target.companyId);
@@ -120,7 +120,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(preview);
   });
 
-  router.post("/import", validate(companyPortabilityImportSchema), async (req, res) => {
+  router.post("/import", expressJson({ limit: "10mb" }), validate(companyPortabilityImportSchema), async (req, res) => {
     assertBoard(req);
     if (req.body.target.mode === "existing_company") {
       assertCompanyAccess(req, req.body.target.companyId);
@@ -146,21 +146,21 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(result);
   });
 
-  router.post("/:companyId/exports/preview", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:companyId/exports/preview", expressJson({ limit: "10mb" }), validate(companyPortabilityExportSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     await assertCanManagePortability(req, companyId, "exports");
     const preview = await portability.previewExport(companyId, req.body);
     res.json(preview);
   });
 
-  router.post("/:companyId/exports", validate(companyPortabilityExportSchema), async (req, res) => {
+  router.post("/:companyId/exports", expressJson({ limit: "10mb" }), validate(companyPortabilityExportSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     await assertCanManagePortability(req, companyId, "exports");
     const result = await portability.exportBundle(companyId, req.body);
     res.json(result);
   });
 
-  router.post("/:companyId/imports/preview", validate(companyPortabilityPreviewSchema), async (req, res) => {
+  router.post("/:companyId/imports/preview", expressJson({ limit: "10mb" }), validate(companyPortabilityPreviewSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     await assertCanManagePortability(req, companyId, "imports");
     if (req.body.target.mode === "existing_company" && req.body.target.companyId !== companyId) {
@@ -176,7 +176,7 @@ export function companyRoutes(db: Db, storage?: StorageService) {
     res.json(preview);
   });
 
-  router.post("/:companyId/imports/apply", validate(companyPortabilityImportSchema), async (req, res) => {
+  router.post("/:companyId/imports/apply", expressJson({ limit: "10mb" }), validate(companyPortabilityImportSchema), async (req, res) => {
     const companyId = req.params.companyId as string;
     await assertCanManagePortability(req, companyId, "imports");
     if (req.body.target.mode === "existing_company" && req.body.target.companyId !== companyId) {

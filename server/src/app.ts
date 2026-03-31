@@ -80,7 +80,7 @@ export async function createApp(
 
   app.use(express.json({
     // Company import/export payloads can inline full portable packages.
-    limit: "10mb",
+    limit: "1mb",
     verify: (req, _res, buf) => {
       (req as unknown as { rawBody: Buffer }).rawBody = buf;
     },
