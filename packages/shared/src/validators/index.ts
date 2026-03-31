@@ -43,10 +43,16 @@ export {
   companySkillCreateSchema,
   companySkillFileDetailSchema,
   companySkillFileUpdateSchema,
+  companySkillListParamsSchema,
+  companySkillDetailParamsSchema,
+  companySkillFilesQuerySchema,
   type CompanySkillImport,
   type CompanySkillProjectScan,
   type CompanySkillCreate,
   type CompanySkillFileUpdate,
+  type CompanySkillListParams,
+  type CompanySkillDetailParams,
+  type CompanySkillFilesQuery,
 } from "./company-skill.js";
 export {
   agentSkillStateSchema,
@@ -132,6 +138,7 @@ export {
   issueDocumentKeySchema,
   upsertIssueDocumentSchema,
   restoreIssueDocumentRevisionSchema,
+  issueListQuerySchema,
   type CreateIssue,
   type CreateIssueLabel,
   type UpdateIssue,
@@ -143,6 +150,7 @@ export {
   type IssueDocumentFormat,
   type UpsertIssueDocument,
   type RestoreIssueDocumentRevision,
+  type IssueListQuery,
 } from "./issue.js";
 
 export {
@@ -274,6 +282,9 @@ export {
   pluginStateScopeKeySchema,
   setPluginStateSchema,
   listPluginStateSchema,
+  pluginListToolsQuerySchema,
+  pluginLogsQuerySchema,
+  pluginWebhookDeliveriesQuerySchema,
   type PluginJobDeclarationInput,
   type PluginWebhookDeclarationInput,
   type PluginToolDeclarationInput,
@@ -290,4 +301,7 @@ export {
   type PluginStateScopeKey,
   type SetPluginState,
   type ListPluginState,
+  type PluginListToolsQuery,
+  type PluginLogsQuery,
+  type PluginWebhookDeliveriesQuery,
 } from "./plugin.js";

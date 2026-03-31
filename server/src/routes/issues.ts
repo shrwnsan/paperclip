@@ -254,67 +254,89 @@ export function issueRoutes(db: Db, storage: StorageService) {
     });
   });
 
-  router.get("/companies/:companyId/issues", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const assigneeUserFilterRaw = req.query.assigneeUserId as string | undefined;
-    const touchedByUserFilterRaw = req.query.touchedByUserId as string | undefined;
-    const inboxArchivedByUserFilterRaw = req.query.inboxArchivedByUserId as string | undefined;
-    const unreadForUserFilterRaw = req.query.unreadForUserId as string | undefined;
-    const assigneeUserId =
-      assigneeUserFilterRaw === "me" && req.actor.type === "board"
-        ? req.actor.userId
-        : assigneeUserFilterRaw;
-    const touchedByUserId =
-      touchedByUserFilterRaw === "me" && req.actor.type === "board"
-        ? req.actor.userId
-        : touchedByUserFilterRaw;
-    const inboxArchivedByUserId =
-      inboxArchivedByUserFilterRaw === "me" && req.actor.type === "board"
-        ? req.actor.userId
-        : inboxArchivedByUserFilterRaw;
-    const unreadForUserId =
-      unreadForUserFilterRaw === "me" && req.actor.type === "board"
-        ? req.actor.userId
-        : unreadForUserFilterRaw;
-
-    if (assigneeUserFilterRaw === "me" && (!assigneeUserId || req.actor.type !== "board")) {
-      res.status(403).json({ error: "assigneeUserId=me requires board authentication" });
-      return;
-    }
-    if (touchedByUserFilterRaw === "me" && (!touchedByUserId || req.actor.type !== "board")) {
-      res.status(403).json({ error: "touchedByUserId=me requires board authentication" });
-      return;
-    }
-    if (inboxArchivedByUserFilterRaw === "me" && (!inboxArchivedByUserId || req.actor.type !== "board")) {
-      res.status(403).json({ error: "inboxArchivedByUserId=me requires board authentication" });
-      return;
-    }
-    if (unreadForUserFilterRaw === "me" && (!unreadForUserId || req.actor.type !== "board")) {
-      res.status(403).json({ error: "unreadForUserId=me requires board authentication" });
-      return;
-    }
-
-    const result = await svc.list(companyId, {
-      status: req.query.status as string | undefined,
-      assigneeAgentId: req.query.assigneeAgentId as string | undefined,
-      participantAgentId: req.query.participantAgentId as string | undefined,
-      assigneeUserId,
-      touchedByUserId,
-      inboxArchivedByUserId,
-      unreadForUserId,
-      projectId: req.query.projectId as string | undefined,
-      executionWorkspaceId: req.query.executionWorkspaceId as string | undefined,
-      parentId: req.query.parentId as string | undefined,
-      labelId: req.query.labelId as string | undefined,
-      originKind: req.query.originKind as string | undefined,
-      originId: req.query.originId as string | undefined,
-      includeRoutineExecutions:
-        req.query.includeRoutineExecutions === "true" || req.query.includeRoutineExecutions === "1",
-      q: req.query.q as string | undefined,
-    });
-    res.json(result);
+  const issueListQuerySchema = z.object({
+    status: z.string().optional(),
+    assigneeAgentId: z.string().optional(),
+    participantAgentId: z.string().optional(),
+    assigneeUserId: z.string().optional(),
+    touchedByUserId: z.string().optional(),
+    inboxArchivedByUserId: z.string().optional(),
+    unreadForUserId: z.string().optional(),
+    projectId: z.string().optional(),
+    executionWorkspaceId: z.string().optional(),
+    parentId: z.string().optional(),
+    labelId: z.string().optional(),
+    originKind: z.string().optional(),
+    originId: z.string().optional(),
+    includeRoutineExecutions: z.string().optional(),
+    q: z.string().optional(),
   });
+
+  router.get(
+    "/companies/:companyId/issues",
+    validate({ query: issueListQuerySchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      assertCompanyAccess(req, companyId);
+      const assigneeUserFilterRaw = req.query.assigneeUserId as any;
+      const touchedByUserFilterRaw = req.query.touchedByUserId as any;
+      const inboxArchivedByUserFilterRaw = req.query.inboxArchivedByUserId as any;
+      const unreadForUserFilterRaw = req.query.unreadForUserId as any;
+      const assigneeUserId =
+        assigneeUserFilterRaw === "me" && req.actor.type === "board"
+          ? req.actor.userId
+          : assigneeUserFilterRaw;
+      const touchedByUserId =
+        touchedByUserFilterRaw === "me" && req.actor.type === "board"
+          ? req.actor.userId
+          : touchedByUserFilterRaw;
+      const inboxArchivedByUserId =
+        inboxArchivedByUserFilterRaw === "me" && req.actor.type === "board"
+          ? req.actor.userId
+          : inboxArchivedByUserFilterRaw;
+      const unreadForUserId =
+        unreadForUserFilterRaw === "me" && req.actor.type === "board"
+          ? req.actor.userId
+          : unreadForUserFilterRaw;
+
+      if (assigneeUserFilterRaw === "me" && (!assigneeUserId || req.actor.type !== "board")) {
+        res.status(403).json({ error: "assigneeUserId=me requires board authentication" });
+        return;
+      }
+      if (touchedByUserFilterRaw === "me" && (!touchedByUserId || req.actor.type !== "board")) {
+        res.status(403).json({ error: "touchedByUserId=me requires board authentication" });
+        return;
+      }
+      if (inboxArchivedByUserFilterRaw === "me" && (!inboxArchivedByUserId || req.actor.type !== "board")) {
+        res.status(403).json({ error: "inboxArchivedByUserId=me requires board authentication" });
+        return;
+      }
+      if (unreadForUserFilterRaw === "me" && (!unreadForUserId || req.actor.type !== "board")) {
+        res.status(403).json({ error: "unreadForUserId=me requires board authentication" });
+        return;
+      }
+
+      const result = await svc.list(companyId, {
+        status: (req.query.status as any),
+        assigneeAgentId: (req.query.assigneeAgentId as any),
+        participantAgentId: (req.query.participantAgentId as any),
+        assigneeUserId,
+        touchedByUserId,
+        inboxArchivedByUserId,
+        unreadForUserId,
+        projectId: (req.query.projectId as any),
+        executionWorkspaceId: (req.query.executionWorkspaceId as any),
+        parentId: (req.query.parentId as any),
+        labelId: (req.query.labelId as any),
+        originKind: (req.query.originKind as any),
+        originId: (req.query.originId as any),
+        includeRoutineExecutions:
+          req.query.includeRoutineExecutions === "true" || req.query.includeRoutineExecutions === "1",
+        q: (req.query.q as any),
+      });
+      res.json(result);
+    },
+  );
 
   router.get("/companies/:companyId/labels", async (req, res) => {
     const companyId = req.params.companyId as string;

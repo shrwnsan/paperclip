@@ -125,3 +125,31 @@ export const restoreIssueDocumentRevisionSchema = z.object({});
 export type IssueDocumentFormat = z.infer<typeof issueDocumentFormatSchema>;
 export type UpsertIssueDocument = z.infer<typeof upsertIssueDocumentSchema>;
 export type RestoreIssueDocumentRevision = z.infer<typeof restoreIssueDocumentRevisionSchema>;
+
+// ---------------------------------------------------------------------------
+// Query/Param validation schemas for GET routes
+// ---------------------------------------------------------------------------
+
+/**
+ * Query schema for GET /companies/:companyId/issues
+ * Supports filtering by multiple optional criteria
+ */
+export const issueListQuerySchema = z.object({
+  status: z.string().optional(),
+  assigneeAgentId: z.string().optional(),
+  participantAgentId: z.string().optional(),
+  assigneeUserId: z.string().optional(),
+  touchedByUserId: z.string().optional(),
+  inboxArchivedByUserId: z.string().optional(),
+  unreadForUserId: z.string().optional(),
+  projectId: z.string().optional(),
+  executionWorkspaceId: z.string().optional(),
+  parentId: z.string().optional(),
+  labelId: z.string().optional(),
+  originKind: z.string().optional(),
+  originId: z.string().optional(),
+  includeRoutineExecutions: z.string().optional(),
+  q: z.string().optional(),
+});
+
+export type IssueListQuery = z.infer<typeof issueListQuerySchema>;

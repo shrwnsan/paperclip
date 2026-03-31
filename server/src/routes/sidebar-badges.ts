@@ -1,10 +1,12 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { Db } from "@paperclipai/db";
 import { and, eq, sql } from "drizzle-orm";
 import { joinRequests } from "@paperclipai/db";
 import { sidebarBadgeService } from "../services/sidebar-badges.js";
 import { accessService } from "../services/access.js";
 import { dashboardService } from "../services/dashboard.js";
+import { validate } from "../middleware/validate.js";
 import { assertCompanyAccess } from "./authz.js";
 
 export function sidebarBadgeRoutes(db: Db) {
@@ -13,9 +15,16 @@ export function sidebarBadgeRoutes(db: Db) {
   const access = accessService(db);
   const dashboard = dashboardService(db);
 
-  router.get("/companies/:companyId/sidebar-badges", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
+  const sidebarBadgeParamsSchema = z.object({
+    companyId: z.string().uuid(),
+  });
+
+  router.get(
+    "/companies/:companyId/sidebar-badges",
+    validate({ params: sidebarBadgeParamsSchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      assertCompanyAccess(req, companyId);
     let canApproveJoins = false;
     if (req.actor.type === "board") {
       canApproveJoins =
@@ -44,8 +53,9 @@ export function sidebarBadgeRoutes(db: Db) {
       (summary.costs.monthBudgetCents > 0 && summary.costs.monthUtilizationPercent >= 80 ? 1 : 0);
     badges.inbox = badges.failedRuns + alertsCount + joinRequestCount + badges.approvals;
 
-    res.json(badges);
-  });
+      res.json(badges);
+    },
+  );
 
   return router;
 }

@@ -21,6 +21,7 @@ import { existsSync } from "node:fs";
 import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
+import { z } from "zod";
 import { Router } from "express";
 import type { Request } from "express";
 import { and, desc, eq, gte } from "drizzle-orm";
@@ -48,6 +49,7 @@ import type { PluginToolDispatcher } from "../services/plugin-tool-dispatcher.js
 import type { ToolRunContext } from "@paperclipai/plugin-sdk";
 import { JsonRpcCallError, PLUGIN_RPC_ERROR_CODES } from "@paperclipai/plugin-sdk";
 import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
+import { validate } from "../middleware/validate.js";
 import { validateInstanceConfig } from "../services/plugin-config-validator.js";
 
 /** UI slot declaration extracted from plugin manifest */
@@ -471,6 +473,10 @@ export function pluginRoutes(
   // Tool discovery and execution routes
   // ===========================================================================
 
+  const pluginListToolsQuerySchema = z.object({
+    pluginId: z.string().min(1).optional(),
+  });
+
   /**
    * GET /api/plugins/tools
    *
@@ -482,19 +488,23 @@ export function pluginRoutes(
    * Response: `AgentToolDescriptor[]`
    * Errors: 501 if tool dispatcher is not configured
    */
-  router.get("/plugins/tools", async (req, res) => {
-    assertBoard(req);
+  router.get(
+    "/plugins/tools",
+    validate({ query: pluginListToolsQuerySchema }),
+    async (req, res) => {
+      assertBoard(req);
 
-    if (!toolDeps) {
-      res.status(501).json({ error: "Plugin tool dispatch is not enabled" });
-      return;
-    }
+      if (!toolDeps) {
+        res.status(501).json({ error: "Plugin tool dispatch is not enabled" });
+        return;
+      }
 
-    const pluginId = req.query.pluginId as string | undefined;
-    const filter = pluginId ? { pluginId } : undefined;
-    const tools = toolDeps.toolDispatcher.listToolsForAgent(filter);
-    res.json(tools);
-  });
+      const { pluginId } = req.query as { pluginId?: string };
+      const filter = pluginId ? { pluginId } : undefined;
+      const tools = toolDeps.toolDispatcher.listToolsForAgent(filter);
+      res.json(tools);
+    },
+  );
 
   /**
    * POST /api/plugins/tools/execute
@@ -1398,6 +1408,19 @@ export function pluginRoutes(
     res.json(result);
   });
 
+  const pluginLogsQuerySchema = z.object({
+    limit: z
+      .string()
+      .optional()
+      .transform((val) => {
+        if (!val) return 25;
+        const parsed = parseInt(val, 10);
+        return isNaN(parsed) ? 25 : Math.min(Math.max(parsed, 1), 500);
+      }),
+    level: z.string().optional(),
+    since: z.string().optional(),
+  });
+
   /**
    * GET /api/plugins/:pluginId/logs
    *
@@ -1410,40 +1433,43 @@ export function pluginRoutes(
    *
    * Response: Array of log entries, newest first.
    */
-  router.get("/plugins/:pluginId/logs", async (req, res) => {
-    assertBoard(req);
-    const { pluginId } = req.params;
+  router.get(
+    "/plugins/:pluginId/logs",
+    validate({ query: pluginLogsQuerySchema }),
+    async (req, res) => {
+      assertBoard(req);
+      const pluginId = req.params.pluginId as string;
 
-    const plugin = await resolvePlugin(registry, pluginId);
-    if (!plugin) {
-      res.status(404).json({ error: "Plugin not found" });
-      return;
-    }
-
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string, 10) || 25, 1), 500);
-    const level = req.query.level as string | undefined;
-    const since = req.query.since as string | undefined;
-
-    const conditions = [eq(pluginLogs.pluginId, plugin.id)];
-    if (level) {
-      conditions.push(eq(pluginLogs.level, level));
-    }
-    if (since) {
-      const sinceDate = new Date(since);
-      if (!isNaN(sinceDate.getTime())) {
-        conditions.push(gte(pluginLogs.createdAt, sinceDate));
+      const plugin = await resolvePlugin(registry, pluginId);
+      if (!plugin) {
+        res.status(404).json({ error: "Plugin not found" });
+        return;
       }
-    }
 
-    const rows = await db
-      .select()
-      .from(pluginLogs)
-      .where(and(...conditions))
-      .orderBy(desc(pluginLogs.createdAt))
-      .limit(limit);
+      const { limit, level, since } = req.query;
+      const actualLimit = typeof limit === "number" ? limit : 25;
 
-    res.json(rows);
-  });
+      const conditions = [eq(pluginLogs.pluginId, plugin.id)];
+      if (level) {
+        conditions.push(eq(pluginLogs.level, level as string));
+      }
+      if (since) {
+        const sinceDate = new Date(since as string);
+        if (!isNaN(sinceDate.getTime())) {
+          conditions.push(gte(pluginLogs.createdAt, sinceDate));
+        }
+      }
+
+      const rows = await db
+        .select()
+        .from(pluginLogs)
+        .where(and(...conditions))
+        .orderBy(desc(pluginLogs.createdAt))
+        .limit(actualLimit);
+
+      res.json(rows);
+    },
+  );
 
   /**
    * POST /api/plugins/:pluginId/upgrade

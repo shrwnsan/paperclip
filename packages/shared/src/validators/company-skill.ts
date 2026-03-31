@@ -133,3 +133,36 @@ export type CompanySkillImport = z.infer<typeof companySkillImportSchema>;
 export type CompanySkillProjectScan = z.infer<typeof companySkillProjectScanRequestSchema>;
 export type CompanySkillCreate = z.infer<typeof companySkillCreateSchema>;
 export type CompanySkillFileUpdate = z.infer<typeof companySkillFileUpdateSchema>;
+
+// ---------------------------------------------------------------------------
+// Query/Param validation schemas for GET routes
+// ---------------------------------------------------------------------------
+
+/**
+ * Param schema for GET /companies/:companyId/skills
+ */
+export const companySkillListParamsSchema = z.object({
+  companyId: z.string().uuid(),
+});
+
+export type CompanySkillListParams = z.infer<typeof companySkillListParamsSchema>;
+
+/**
+ * Param schema for GET /companies/:companyId/skills/:skillId
+ */
+export const companySkillDetailParamsSchema = z.object({
+  companyId: z.string().uuid(),
+  skillId: z.string().min(1),
+});
+
+export type CompanySkillDetailParams = z.infer<typeof companySkillDetailParamsSchema>;
+
+/**
+ * Query schema for GET /companies/:companyId/skills/:skillId/files
+ * Retrieves a skill file by path
+ */
+export const companySkillFilesQuerySchema = z.object({
+  path: z.string().optional().default("SKILL.md"),
+});
+
+export type CompanySkillFilesQuery = z.infer<typeof companySkillFilesQuerySchema>;

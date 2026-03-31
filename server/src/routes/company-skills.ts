@@ -1,5 +1,6 @@
 import { Router, type Request } from "express";
 import type { Db } from "@paperclipai/db";
+import { z } from "zod";
 import {
   companySkillCreateSchema,
   companySkillFileUpdateSchema,
@@ -51,49 +52,78 @@ export function companySkillRoutes(db: Db) {
     throw forbidden("Missing permission: can create agents");
   }
 
-  router.get("/companies/:companyId/skills", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.list(companyId);
-    res.json(result);
+  const companySkillListParamsSchema = z.object({
+    companyId: z.string().uuid(),
   });
 
-  router.get("/companies/:companyId/skills/:skillId", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.detail(companyId, skillId);
-    if (!result) {
-      res.status(404).json({ error: "Skill not found" });
-      return;
-    }
-    res.json(result);
+  const companySkillDetailParamsSchema = z.object({
+    companyId: z.string().uuid(),
+    skillId: z.string().min(1),
   });
 
-  router.get("/companies/:companyId/skills/:skillId/update-status", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
-    assertCompanyAccess(req, companyId);
-    const result = await svc.updateStatus(companyId, skillId);
-    if (!result) {
-      res.status(404).json({ error: "Skill not found" });
-      return;
-    }
-    res.json(result);
+  const companySkillFilesQuerySchema = z.object({
+    path: z.string().optional().default("SKILL.md"),
   });
 
-  router.get("/companies/:companyId/skills/:skillId/files", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
-    const relativePath = String(req.query.path ?? "SKILL.md");
-    assertCompanyAccess(req, companyId);
-    const result = await svc.readFile(companyId, skillId, relativePath);
-    if (!result) {
-      res.status(404).json({ error: "Skill not found" });
-      return;
-    }
-    res.json(result);
-  });
+  router.get(
+    "/companies/:companyId/skills",
+    validate({ params: companySkillListParamsSchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      assertCompanyAccess(req, companyId);
+      const result = await svc.list(companyId);
+      res.json(result);
+    },
+  );
+
+  router.get(
+    "/companies/:companyId/skills/:skillId",
+    validate({ params: companySkillDetailParamsSchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const skillId = req.params.skillId as string;
+      assertCompanyAccess(req, companyId);
+      const result = await svc.detail(companyId, skillId);
+      if (!result) {
+        res.status(404).json({ error: "Skill not found" });
+        return;
+      }
+      res.json(result);
+    },
+  );
+
+  router.get(
+    "/companies/:companyId/skills/:skillId/update-status",
+    validate({ params: companySkillDetailParamsSchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const skillId = req.params.skillId as string;
+      assertCompanyAccess(req, companyId);
+      const result = await svc.updateStatus(companyId, skillId);
+      if (!result) {
+        res.status(404).json({ error: "Skill not found" });
+        return;
+      }
+      res.json(result);
+    },
+  );
+
+  router.get(
+    "/companies/:companyId/skills/:skillId/files",
+    validate({ params: companySkillDetailParamsSchema, query: companySkillFilesQuerySchema }),
+    async (req, res) => {
+      const companyId = req.params.companyId as string;
+      const skillId = req.params.skillId as string;
+      const relativePath = req.query.path as string;
+      assertCompanyAccess(req, companyId);
+      const result = await svc.readFile(companyId, skillId, relativePath);
+      if (!result) {
+        res.status(404).json({ error: "Skill not found" });
+        return;
+      }
+      res.json(result);
+    },
+  );
 
   router.post(
     "/companies/:companyId/skills",

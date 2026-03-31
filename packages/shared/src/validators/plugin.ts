@@ -668,3 +668,54 @@ export const listPluginStateSchema = z.object({
 });
 
 export type ListPluginState = z.infer<typeof listPluginStateSchema>;
+
+// ---------------------------------------------------------------------------
+// Query/Param validation schemas for GET routes
+// ---------------------------------------------------------------------------
+
+/**
+ * Query schema for GET /api/plugins/tools
+ * Filters tools by optional pluginId
+ */
+export const pluginListToolsQuerySchema = z.object({
+  pluginId: z.string().min(1).optional(),
+});
+
+export type PluginListToolsQuery = z.infer<typeof pluginListToolsQuerySchema>;
+
+/**
+ * Query schema for GET /api/plugins/:pluginId/logs
+ * Filters logs by level and optional since timestamp
+ */
+export const pluginLogsQuerySchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return 25;
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) ? 25 : Math.min(Math.max(parsed, 1), 500);
+    }),
+  level: z.string().optional(),
+  since: z.string().optional(),
+});
+
+export type PluginLogsQuery = z.infer<typeof pluginLogsQuerySchema>;
+
+/**
+ * Query schema for GET /api/plugins/:pluginId/webhook-deliveries
+ * Filters webhook delivery logs by optional status and limit
+ */
+export const pluginWebhookDeliveriesQuerySchema = z.object({
+  limit: z
+    .string()
+    .optional()
+    .transform((val) => {
+      if (!val) return 25;
+      const parsed = parseInt(val, 10);
+      return isNaN(parsed) ? 25 : Math.max(parsed, 1);
+    }),
+  status: z.enum(["active", "paused", "failed"]).optional(),
+});
+
+export type PluginWebhookDeliveriesQuery = z.infer<typeof pluginWebhookDeliveriesQuerySchema>;
