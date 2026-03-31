@@ -6,6 +6,7 @@ import { boardMutationGuard } from "../middleware/board-mutation-guard.js";
 function createApp(
   actorType: "board" | "agent",
   boardSource: "session" | "local_implicit" | "board_key" = "session",
+  configuredOrigins: string[] = [],
 ) {
   const app = express();
   app.use(express.json());
@@ -15,7 +16,7 @@ function createApp(
       : { type: "agent", agentId: "agent-1" };
     next();
   });
-  app.use(boardMutationGuard());
+  app.use(boardMutationGuard(configuredOrigins));
   app.post("/mutate", (_req, res) => {
     res.status(204).end();
   });
@@ -85,7 +86,7 @@ describe("boardMutationGuard", () => {
   });
 
   it("allows board mutations when x-forwarded-host matches origin", async () => {
-    const app = createApp("board");
+    const app = createApp("board", "session", ["https://10.90.10.20:3443"]);
     const res = await request(app)
       .post("/mutate")
       .set("Host", "127.0.0.1")

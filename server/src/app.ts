@@ -129,7 +129,10 @@ export async function createApp(
 
   // Mount API routes
   const api = Router();
-  api.use(boardMutationGuard());
+  const trustedOrigins = process.env.PAPERCLIP_TRUSTED_ORIGINS
+    ? process.env.PAPERCLIP_TRUSTED_ORIGINS.split(",").map((o) => o.trim())
+    : [];
+  api.use(boardMutationGuard(trustedOrigins));
   api.use(
     "/health",
     healthRoutes(db, {
