@@ -15,6 +15,12 @@ import {
   updateIssueWorkProductSchema,
   upsertIssueDocumentSchema,
   updateIssueSchema,
+  issueListParamsSchema,
+  issueListQuerySchema,
+  issueDetailParamsSchema,
+  issueLabelParamsSchema,
+  issueDocumentParamsSchema,
+  issueDocumentRevisionParamsSchema,
 } from "@paperclipai/shared";
 import type { StorageService } from "../storage/types.js";
 import { validate } from "../middleware/validate.js";
@@ -254,13 +260,13 @@ export function issueRoutes(db: Db, storage: StorageService) {
     });
   });
 
-  router.get("/companies/:companyId/issues", async (req, res) => {
-    const companyId = req.params.companyId as string;
+  router.get("/companies/:companyId/issues", validate({ params: issueListParamsSchema, query: issueListQuerySchema }), async (req, res) => {
+    const companyId = req.params.companyId;
     assertCompanyAccess(req, companyId);
-    const assigneeUserFilterRaw = req.query.assigneeUserId as string | undefined;
-    const touchedByUserFilterRaw = req.query.touchedByUserId as string | undefined;
-    const inboxArchivedByUserFilterRaw = req.query.inboxArchivedByUserId as string | undefined;
-    const unreadForUserFilterRaw = req.query.unreadForUserId as string | undefined;
+    const assigneeUserFilterRaw = req.query.assigneeUserId;
+    const touchedByUserFilterRaw = req.query.touchedByUserId;
+    const inboxArchivedByUserFilterRaw = req.query.inboxArchivedByUserId;
+    const unreadForUserFilterRaw = req.query.unreadForUserId;
     const assigneeUserId =
       assigneeUserFilterRaw === "me" && req.actor.type === "board"
         ? req.actor.userId
@@ -296,35 +302,35 @@ export function issueRoutes(db: Db, storage: StorageService) {
     }
 
     const result = await svc.list(companyId, {
-      status: req.query.status as string | undefined,
-      assigneeAgentId: req.query.assigneeAgentId as string | undefined,
-      participantAgentId: req.query.participantAgentId as string | undefined,
+      status: req.query.status,
+      assigneeAgentId: req.query.assigneeAgentId,
+      participantAgentId: req.query.participantAgentId,
       assigneeUserId,
       touchedByUserId,
       inboxArchivedByUserId,
       unreadForUserId,
-      projectId: req.query.projectId as string | undefined,
-      executionWorkspaceId: req.query.executionWorkspaceId as string | undefined,
-      parentId: req.query.parentId as string | undefined,
-      labelId: req.query.labelId as string | undefined,
-      originKind: req.query.originKind as string | undefined,
-      originId: req.query.originId as string | undefined,
+      projectId: req.query.projectId,
+      executionWorkspaceId: req.query.executionWorkspaceId,
+      parentId: req.query.parentId,
+      labelId: req.query.labelId,
+      originKind: req.query.originKind,
+      originId: req.query.originId,
       includeRoutineExecutions:
         req.query.includeRoutineExecutions === "true" || req.query.includeRoutineExecutions === "1",
-      q: req.query.q as string | undefined,
+      q: req.query.q,
     });
     res.json(result);
   });
 
-  router.get("/companies/:companyId/labels", async (req, res) => {
-    const companyId = req.params.companyId as string;
+  router.get("/companies/:companyId/labels", validate({ params: issueListParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
     assertCompanyAccess(req, companyId);
     const result = await svc.listLabels(companyId);
     res.json(result);
   });
 
-  router.post("/companies/:companyId/labels", validate(createIssueLabelSchema), async (req, res) => {
-    const companyId = req.params.companyId as string;
+  router.post("/companies/:companyId/labels", validate({ params: issueListParamsSchema, body: createIssueLabelSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
     assertCompanyAccess(req, companyId);
     const label = await svc.createLabel(companyId, req.body);
     const actor = getActorInfo(req);
@@ -342,8 +348,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.status(201).json(label);
   });
 
-  router.delete("/labels/:labelId", async (req, res) => {
-    const labelId = req.params.labelId as string;
+  router.delete("/labels/:labelId", validate({ params: z.object({ labelId: z.string().uuid() }) }), async (req, res) => {
+    const labelId = req.params.labelId;
     const existing = await svc.getLabelById(labelId);
     if (!existing) {
       res.status(404).json({ error: "Label not found" });
@@ -370,8 +376,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(removed);
   });
 
-  router.get("/issues/:id", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -404,8 +410,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     });
   });
 
-  router.get("/issues/:id/heartbeat-context", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/heartbeat-context", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -472,8 +478,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     });
   });
 
-  router.get("/issues/:id/work-products", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/work-products", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -484,8 +490,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(workProducts);
   });
 
-  router.get("/issues/:id/documents", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/documents", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -496,8 +502,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(docs);
   });
 
-  router.get("/issues/:id/documents/:key", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/documents/:key", validate({ params: issueDocumentParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -566,8 +572,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.status(result.created ? 201 : 200).json(doc);
   });
 
-  router.get("/issues/:id/documents/:key/revisions", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/documents/:key/revisions", validate({ params: issueDocumentParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -634,8 +640,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     },
   );
 
-  router.delete("/issues/:id/documents/:key", async (req, res) => {
-    const id = req.params.id as string;
+  router.delete("/issues/:id/documents/:key", validate({ params: issueDocumentParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -890,8 +896,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(removed ?? { ok: true });
   });
 
-  router.get("/issues/:id/approvals", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/approvals", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -902,8 +908,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(approvals);
   });
 
-  router.post("/issues/:id/approvals", validate(linkIssueApprovalSchema), async (req, res) => {
-    const id = req.params.id as string;
+  router.post("/issues/:id/approvals", validate({ params: issueDetailParamsSchema, body: linkIssueApprovalSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -933,9 +939,9 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.status(201).json(approvals);
   });
 
-  router.delete("/issues/:id/approvals/:approvalId", async (req, res) => {
-    const id = req.params.id as string;
-    const approvalId = req.params.approvalId as string;
+  router.delete("/issues/:id/approvals/:approvalId", validate({ params: z.object({ id: z.string().uuid(), approvalId: z.string().uuid() }) }), async (req, res) => {
+    const id = req.params.id;
+    const approvalId = req.params.approvalId;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -1411,8 +1417,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(released);
   });
 
-  router.get("/issues/:id/comments", async (req, res) => {
-    const id = req.params.id as string;
+  router.get("/issues/:id/comments", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const id = req.params.id;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -1445,9 +1451,9 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.json(comments);
   });
 
-  router.get("/issues/:id/comments/:commentId", async (req, res) => {
-    const id = req.params.id as string;
-    const commentId = req.params.commentId as string;
+  router.get("/issues/:id/comments/:commentId", validate({ params: z.object({ id: z.string().uuid(), commentId: z.string().uuid() }) }), async (req, res) => {
+    const id = req.params.id;
+    const commentId = req.params.commentId;
     const issue = await svc.getById(id);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });
@@ -1660,8 +1666,8 @@ export function issueRoutes(db: Db, storage: StorageService) {
     res.status(201).json(comment);
   });
 
-  router.get("/issues/:id/attachments", async (req, res) => {
-    const issueId = req.params.id as string;
+  router.get("/issues/:id/attachments", validate({ params: issueDetailParamsSchema }), async (req, res) => {
+    const issueId = req.params.id;
     const issue = await svc.getById(issueId);
     if (!issue) {
       res.status(404).json({ error: "Issue not found" });

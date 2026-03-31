@@ -1,4 +1,5 @@
 import { Router } from "express";
+import { z } from "zod";
 import type { Db } from "@paperclipai/db";
 import { and, eq, sql } from "drizzle-orm";
 import { joinRequests } from "@paperclipai/db";
@@ -6,6 +7,11 @@ import { sidebarBadgeService } from "../services/sidebar-badges.js";
 import { accessService } from "../services/access.js";
 import { dashboardService } from "../services/dashboard.js";
 import { assertCompanyAccess } from "./authz.js";
+import { validate } from "../middleware/validate.js";
+
+const sidebarBadgesParamsSchema = z.object({
+  companyId: z.string().uuid(),
+});
 
 export function sidebarBadgeRoutes(db: Db) {
   const router = Router();
@@ -13,8 +19,8 @@ export function sidebarBadgeRoutes(db: Db) {
   const access = accessService(db);
   const dashboard = dashboardService(db);
 
-  router.get("/companies/:companyId/sidebar-badges", async (req, res) => {
-    const companyId = req.params.companyId as string;
+  router.get("/companies/:companyId/sidebar-badges", validate({ params: sidebarBadgesParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
     assertCompanyAccess(req, companyId);
     let canApproveJoins = false;
     if (req.actor.type === "board") {

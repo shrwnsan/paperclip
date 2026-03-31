@@ -5,6 +5,9 @@ import {
   companySkillFileUpdateSchema,
   companySkillImportSchema,
   companySkillProjectScanRequestSchema,
+  companySkillListParamsSchema,
+  companySkillDetailParamsSchema,
+  companySkillFilesQuerySchema,
 } from "@paperclipai/shared";
 import { validate } from "../middleware/validate.js";
 import { accessService, agentService, companySkillService, logActivity } from "../services/index.js";
@@ -51,16 +54,16 @@ export function companySkillRoutes(db: Db) {
     throw forbidden("Missing permission: can create agents");
   }
 
-  router.get("/companies/:companyId/skills", async (req, res) => {
-    const companyId = req.params.companyId as string;
+  router.get("/companies/:companyId/skills", validate({ params: companySkillListParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
     assertCompanyAccess(req, companyId);
     const result = await svc.list(companyId);
     res.json(result);
   });
 
-  router.get("/companies/:companyId/skills/:skillId", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
+  router.get("/companies/:companyId/skills/:skillId", validate({ params: companySkillDetailParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
+    const skillId = req.params.skillId;
     assertCompanyAccess(req, companyId);
     const result = await svc.detail(companyId, skillId);
     if (!result) {
@@ -70,9 +73,9 @@ export function companySkillRoutes(db: Db) {
     res.json(result);
   });
 
-  router.get("/companies/:companyId/skills/:skillId/update-status", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
+  router.get("/companies/:companyId/skills/:skillId/update-status", validate({ params: companySkillDetailParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
+    const skillId = req.params.skillId;
     assertCompanyAccess(req, companyId);
     const result = await svc.updateStatus(companyId, skillId);
     if (!result) {
@@ -82,10 +85,10 @@ export function companySkillRoutes(db: Db) {
     res.json(result);
   });
 
-  router.get("/companies/:companyId/skills/:skillId/files", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
-    const relativePath = String(req.query.path ?? "SKILL.md");
+  router.get("/companies/:companyId/skills/:skillId/files", validate({ params: companySkillDetailParamsSchema, query: companySkillFilesQuerySchema }), async (req, res) => {
+    const companyId = req.params.companyId;
+    const skillId = req.params.skillId;
+    const relativePath = req.query.path ?? "SKILL.md";
     assertCompanyAccess(req, companyId);
     const result = await svc.readFile(companyId, skillId, relativePath);
     if (!result) {
@@ -97,9 +100,9 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/companies/:companyId/skills",
-    validate(companySkillCreateSchema),
+    validate({ params: companySkillListParamsSchema, body: companySkillCreateSchema }),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
+      const companyId = req.params.companyId;
       await assertCanMutateCompanySkills(req, companyId);
       const result = await svc.createLocalSkill(companyId, req.body);
 
@@ -125,10 +128,10 @@ export function companySkillRoutes(db: Db) {
 
   router.patch(
     "/companies/:companyId/skills/:skillId/files",
-    validate(companySkillFileUpdateSchema),
+    validate({ params: companySkillDetailParamsSchema, body: companySkillFileUpdateSchema }),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
-      const skillId = req.params.skillId as string;
+      const companyId = req.params.companyId;
+      const skillId = req.params.skillId;
       await assertCanMutateCompanySkills(req, companyId);
       const result = await svc.updateFile(
         companyId,
@@ -159,9 +162,9 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/companies/:companyId/skills/import",
-    validate(companySkillImportSchema),
+    validate({ params: companySkillListParamsSchema, body: companySkillImportSchema }),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
+      const companyId = req.params.companyId;
       await assertCanMutateCompanySkills(req, companyId);
       const source = String(req.body.source ?? "");
       const result = await svc.importFromSource(companyId, source);
@@ -190,9 +193,9 @@ export function companySkillRoutes(db: Db) {
 
   router.post(
     "/companies/:companyId/skills/scan-projects",
-    validate(companySkillProjectScanRequestSchema),
+    validate({ params: companySkillListParamsSchema, body: companySkillProjectScanRequestSchema }),
     async (req, res) => {
-      const companyId = req.params.companyId as string;
+      const companyId = req.params.companyId;
       await assertCanMutateCompanySkills(req, companyId);
       const result = await svc.scanProjectWorkspaces(companyId, req.body);
 
@@ -221,9 +224,9 @@ export function companySkillRoutes(db: Db) {
     },
   );
 
-  router.delete("/companies/:companyId/skills/:skillId", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
+  router.delete("/companies/:companyId/skills/:skillId", validate({ params: companySkillDetailParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
+    const skillId = req.params.skillId;
     await assertCanMutateCompanySkills(req, companyId);
     const result = await svc.deleteSkill(companyId, skillId);
     if (!result) {
@@ -250,9 +253,9 @@ export function companySkillRoutes(db: Db) {
     res.json(result);
   });
 
-  router.post("/companies/:companyId/skills/:skillId/install-update", async (req, res) => {
-    const companyId = req.params.companyId as string;
-    const skillId = req.params.skillId as string;
+  router.post("/companies/:companyId/skills/:skillId/install-update", validate({ params: companySkillDetailParamsSchema }), async (req, res) => {
+    const companyId = req.params.companyId;
+    const skillId = req.params.skillId;
     await assertCanMutateCompanySkills(req, companyId);
     const result = await svc.installUpdate(companyId, skillId);
     if (!result) {

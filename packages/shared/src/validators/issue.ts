@@ -122,6 +122,48 @@ export const upsertIssueDocumentSchema = z.object({
 
 export const restoreIssueDocumentRevisionSchema = z.object({});
 
+// Query and params validation schemas for GET routes
+export const issueListParamsSchema = z.object({
+  companyId: z.string().uuid(),
+});
+
+export const issueListQuerySchema = z.object({
+  status: z.string().optional(),
+  assigneeUserId: z.string().optional(),
+  touchedByUserId: z.string().optional(),
+  inboxArchivedByUserId: z.string().optional(),
+  unreadForUserId: z.string().optional(),
+  assigneeAgentId: z.string().optional(),
+  participantAgentId: z.string().optional(),
+  projectId: z.string().optional(),
+  executionWorkspaceId: z.string().optional(),
+  parentId: z.string().optional(),
+  labelId: z.string().optional(),
+  originKind: z.string().optional(),
+  originId: z.string().optional(),
+  includeRoutineExecutions: z.string().optional(),
+  q: z.string().optional(),
+});
+
+export const issueDetailParamsSchema = z.object({
+  id: z.string().uuid(),
+});
+
+export const issueLabelParamsSchema = z.object({
+  companyId: z.string().uuid(),
+  labelId: z.string().uuid(),
+});
+
+export const issueDocumentParamsSchema = z.object({
+  id: z.string().uuid(),
+  key: z.string().min(1).max(64).regex(/^[a-z0-9][a-z0-9_-]*$/),
+});
+
+export const issueDocumentRevisionParamsSchema = z.object({
+  id: z.string().uuid(),
+  revisionId: z.string().uuid(),
+});
+
 export type IssueDocumentFormat = z.infer<typeof issueDocumentFormatSchema>;
 export type UpsertIssueDocument = z.infer<typeof upsertIssueDocumentSchema>;
 export type RestoreIssueDocumentRevision = z.infer<typeof restoreIssueDocumentRevisionSchema>;

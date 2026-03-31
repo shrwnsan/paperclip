@@ -129,6 +129,25 @@ export const companySkillFileUpdateSchema = z.object({
   content: z.string(),
 });
 
+// Query and params validation schemas
+export const companySkillParamsSchema = z.object({
+  companyId: z.string().uuid(),
+  skillId: z.string().uuid(),
+});
+
+export const companySkillDetailParamsSchema = z.object({
+  companyId: z.string().uuid(),
+  skillId: z.string().uuid(),
+});
+
+export const companySkillListParamsSchema = z.object({
+  companyId: z.string().uuid(),
+});
+
+export const companySkillFilesQuerySchema = z.object({
+  path: z.string().optional(),
+});
+
 export type CompanySkillImport = z.infer<typeof companySkillImportSchema>;
 export type CompanySkillProjectScan = z.infer<typeof companySkillProjectScanRequestSchema>;
 export type CompanySkillCreate = z.infer<typeof companySkillCreateSchema>;

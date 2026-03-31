@@ -22,6 +22,7 @@ import path from "node:path";
 import { randomUUID } from "node:crypto";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
+import { z } from "zod";
 import type { Request } from "express";
 import { and, desc, eq, gte } from "drizzle-orm";
 import type { Db } from "@paperclipai/db";
@@ -49,6 +50,7 @@ import type { ToolRunContext } from "@paperclipai/plugin-sdk";
 import { JsonRpcCallError, PLUGIN_RPC_ERROR_CODES } from "@paperclipai/plugin-sdk";
 import { assertBoard, assertCompanyAccess, getActorInfo } from "./authz.js";
 import { validateInstanceConfig } from "../services/plugin-config-validator.js";
+import { validate } from "../middleware/validate.js";
 
 /** UI slot declaration extracted from plugin manifest */
 type PluginUiSlotDeclaration = NonNullable<NonNullable<PaperclipPluginManifestV1["ui"]>["slots"]>[number];
@@ -299,6 +301,18 @@ interface PluginToolExecuteRequest {
  * @param bridgeDeps - Optional bridge proxy dependencies for getData/performAction
  * @returns Express router with plugin routes mounted
  */
+
+// Query validation schemas for GET routes
+const pluginsToolsQuerySchema = z.object({
+  pluginId: z.string().optional(),
+});
+
+const pluginsLogsQuerySchema = z.object({
+  limit: z.string().optional(),
+  level: z.string().optional(),
+  since: z.string().optional(),
+});
+
 export function pluginRoutes(
   db: Db,
   loader: ReturnType<typeof pluginLoader>,
@@ -482,7 +496,7 @@ export function pluginRoutes(
    * Response: `AgentToolDescriptor[]`
    * Errors: 501 if tool dispatcher is not configured
    */
-  router.get("/plugins/tools", async (req, res) => {
+  router.get("/plugins/tools", validate({ query: pluginsToolsQuerySchema }), async (req, res) => {
     assertBoard(req);
 
     if (!toolDeps) {
@@ -490,7 +504,7 @@ export function pluginRoutes(
       return;
     }
 
-    const pluginId = req.query.pluginId as string | undefined;
+    const pluginId = req.query.pluginId;
     const filter = pluginId ? { pluginId } : undefined;
     const tools = toolDeps.toolDispatcher.listToolsForAgent(filter);
     res.json(tools);
@@ -1410,7 +1424,7 @@ export function pluginRoutes(
    *
    * Response: Array of log entries, newest first.
    */
-  router.get("/plugins/:pluginId/logs", async (req, res) => {
+  router.get("/plugins/:pluginId/logs", validate({ query: pluginsLogsQuerySchema }), async (req, res) => {
     assertBoard(req);
     const { pluginId } = req.params;
 
@@ -1420,9 +1434,9 @@ export function pluginRoutes(
       return;
     }
 
-    const limit = Math.min(Math.max(parseInt(req.query.limit as string, 10) || 25, 1), 500);
-    const level = req.query.level as string | undefined;
-    const since = req.query.since as string | undefined;
+    const limit = Math.min(Math.max(parseInt(req.query.limit || "25", 10) || 25, 1), 500);
+    const level = req.query.level;
+    const since = req.query.since;
 
     const conditions = [eq(pluginLogs.pluginId, plugin.id)];
     if (level) {
