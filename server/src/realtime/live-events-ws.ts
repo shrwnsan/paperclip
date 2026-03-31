@@ -102,6 +102,8 @@ async function authorizeUpgrade(
     resolveSessionFromHeaders?: (headers: Headers) => Promise<BetterAuthSessionResult | null>;
   },
 ): Promise<UpgradeContext | null> {
+  // NOTE: Query param auth support is maintained for backward compatibility.
+  // Future implementations should use Sec-WebSocket-Protocol header for token delivery.
   const queryToken = url.searchParams.get("token")?.trim() ?? "";
   const authToken = parseBearerToken(req.headers.authorization);
   const token = authToken ?? (queryToken.length > 0 ? queryToken : null);
@@ -264,7 +266,9 @@ export function setupLiveEventsWebSocketServer(
         });
       })
       .catch((err) => {
-        logger.error({ err, path: req.url }, "failed websocket upgrade authorization");
+        // Redact auth token from URL before logging
+        const safeUrl = req.url ? req.url.replace(/([?&])token=[^&]*/g, "$1token=[REDACTED]") : req.url;
+        logger.error({ err, path: safeUrl }, "failed websocket upgrade authorization");
         rejectUpgrade(socket, "500 Internal Server Error", "upgrade failed");
       });
   });
